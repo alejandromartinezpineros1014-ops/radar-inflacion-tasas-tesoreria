@@ -3,6 +3,8 @@
 Proyecto integrador – *Análisis e Interpretación de Datos a través de Python* (tercer corte).
 Diego Alejandro Martínez Piñeros y María Juliana Brand Ardila.
 
+**Aplicación publicada:** https://radar-inflacion-tasas.streamlit.app
+
 **Pregunta:** ¿cómo permiten las relaciones dinámicas entre inflación, tasa de interés, TRM y Brent en
 Colombia, junto con Markov y Monte Carlo, anticipar la inflación y la tasa a 3 y 6 meses y orientar las
 decisiones de plazo de los CDT de una tesorería?
