@@ -14,7 +14,7 @@ Qué hace este script, en orden:
   PARTE 5. Monte Carlo (VAR + fases de Markov) y chequeos de alineación.
   PARTE 6. Recomendación para la tesorería (decide SOLO Monte Carlo).
   PARTE 7. Validación fuera de muestra: dirección, señales falsas,
-           subperiodos, VAR en niveles vs diferencias y estrategias CDT.
+           subperiodos y VAR en niveles vs diferencias.
 
 Requisitos:  pip install pandas numpy matplotlib statsmodels openpyxl scipy
 Ejecutar:    python modelo_completo_v3.py
@@ -56,7 +56,6 @@ UMBRAL_PROB = 0.40          # probabilidad mínima para recomendar amarrar o ren
 # ofrece un banco comercial a una empresa en particular.
 SPREAD_CDT = 0.28
 BLOQUE = 3                  # remuestreo por bloques: meses consecutivos de residuos (1 = residuos sueltos)
-MONTO = 200_000_000         # monto ilustrativo de la tesorería (COP)
 CORRER_VALIDACION = True    # pon False si quieres que el script corra más rápido
 
 COLS_VAR = ["inflacion_anual", "tasa_interes", "var_anual_trm", "var_anual_brent"]
@@ -537,8 +536,7 @@ if CORRER_VALIDACION:
         filas.append({
             "fecha": t,
             "tasa_hoy": hoy_t,
-            "tasa_en_3m": datos["tasa_interes"].iloc[i + 3],
-            "cambio_real_tasa": datos["tasa_interes"].iloc[i + HORIZONTE] - hoy_t,
+                        "cambio_real_tasa": datos["tasa_interes"].iloc[i + HORIZONTE] - hoy_t,
             "p_baja": pb, "p_alza": pa,
             "decision": recomendar(pb, pa),
             "markov_bajando": pm_h[0], "markov_subiendo": pm_h[2],
@@ -630,31 +628,8 @@ Esta decisión es un compromiso entre el análisis conjunto de las variables y l
 predictiva individual. No se afirma que el VAR en niveles sea superior en todos los
 pronósticos ni que Johansen haya demostrado cointegración.""")
 
-    # --- 7.3 Estrategias de CDT (C9): EJERCICIO ILUSTRATIVO ---
-    # No usa la serie histórica de CDT a 90 días (esa serie solo sirvió para estimar el
-    # spread de 0,28). Aquí la tasa de un CDT = tasa interbancaria + SPREAD_CDT.
-    # Lo pidió el plan de correcciones (C9 y punto 13) y lo cita la ficha (Alcance e Integración).
-    # Supuestos: CDT = tasa interbancaria + SPREAD_CDT para cualquier plazo (sin prima por plazo),
-    # sin impuestos ni comisiones; rendimiento de 6 meses en puntos porcentuales anualizados.
-    fija = val["tasa_hoy"] + SPREAD_CDT                                    # amarrar 6 meses
-    renov = (val["tasa_hoy"] + val["tasa_en_3m"]) / 2 + SPREAD_CDT          # dos CDT de 90 días
-    escal = (fija + renov) / 2                                              # mitad y mitad
-    modelo_estr = np.select([val["decision"] == "AMARRAR", val["decision"] == "RENOVAR CORTO"], [fija, renov], escal)
-    estr = pd.DataFrame({"siempre amarrar": fija, "siempre renovar": renov,
-                         "siempre escalonar": escal, "según el modelo": modelo_estr}, index=val.index)
-    resumen = pd.DataFrame({
-        "tasa media %": estr.mean(),
-        "vs escalonar (pts)": estr.mean() - escal.mean(),
-        f"COP por año sobre {MONTO / 1e6:.0f} M": (estr.mean() - escal.mean()) / 100 * MONTO,
-    }).round(3)
-    print("\nComparación de estrategias de CDT (2011 en adelante, supuestos en el código):")
-    print(resumen.to_string())
-    print("Ojo: la diferencia es pequeña y la evaluación usa la tasa interbancaria como referencia,")
-    print("no las tasas que ofrece cada banco. Es una comparación ilustrativa, no una garantía.")
-
     val.to_csv(CARPETA / "validacion.csv")
     errores.to_csv(CARPETA / "errores_pronostico.csv")
-    resumen.to_csv(CARPETA / "estrategias_cdt.csv")
 
 titulo("ADVERTENCIAS REGISTRADAS DURANTE LA EJECUCIÓN")
 if REGISTRO_AVISOS:

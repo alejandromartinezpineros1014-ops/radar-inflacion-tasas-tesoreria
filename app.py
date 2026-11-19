@@ -511,12 +511,6 @@ elif seccion == "✅ ¿Qué tan confiable es?":
             st.markdown(f"**Lectura:** en la **inflación** el modelo se equivoca en promedio **{err.iloc[0, 0]:.2f}** puntos, "
                         f"contra **{err.iloc[0, 2]:.2f}** de suponer que no cambia: es **{100 * (1 - err.iloc[0, 0] / err.iloc[0, 2]):.0f}% "
                         "mejor**. Ahí está su mayor aporte.")
-        ruta_est = CARPETA_RESULTADOS / "estrategias_cdt.csv"
-        if ruta_est.exists():
-            with st.expander("3. ¿Habría ganado más plata siguiendo el modelo? (ejercicio ilustrativo)"):
-                st.dataframe(pd.read_csv(ruta_est, index_col=0).round(3), width="stretch")
-                st.caption("Sí, pero poco: unos 0,1 puntos al año más que escalonar siempre (unos 200.000 pesos sobre 200 "
-                           "millones). Supone CDT = tasa interbancaria + 0,28, sin impuestos ni comisiones.")
     st.subheader("Conclusiones")
     st.markdown(
         "- ✅ **Pronostica la inflación** mejor que suponer que no cambia. La inflación es una de las piezas para estimar cuánto gana de verdad un CDT; la ganancia real también depende de la tasa que ofrezca el banco, los impuestos y las condiciones del producto.\n"
