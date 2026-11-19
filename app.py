@@ -103,12 +103,13 @@ def como_leer_grafico():
 def tarjeta_decision(r, umbral_tasa, horizonte):
     reco = r["reco_final"]
     with st.container(border=True):
-        st.markdown(f"### {COLOR_RECO[reco]} Recomendación de hoy: **{reco}**")
+        st.markdown(f"### {COLOR_RECO[reco]} Recomendación vigente: **{reco}**")
+        st.caption(f"Calculada con el último dato disponible: **{mes(r['fecha_hoy'])}**. Se actualiza cuando se agregan meses nuevos.")
         st.markdown(f"Lo que conviene: {QUE_HACER[reco]}")
         c1, c2, c3 = st.columns(3)
         c1.metric(f"Chance de que la tasa BAJE ≥ {umbral_tasa} pts", f"{100 * r['p_baja']:.0f}%")
         c2.metric(f"Chance de que la tasa SUBA ≥ {umbral_tasa} pts", f"{100 * r['p_alza']:.0f}%")
-        c3.metric(f"Tasa de interés hoy ({mes(r['fecha_hoy'])})", f"{r['tasa_hoy']:.2f}%")
+        c3.metric(f"Tasa de interés · último dato ({mes(r['fecha_hoy'])})", f"{r['tasa_hoy']:.2f}%")
         st.caption(f"**Por qué:** en los próximos {horizonte} meses, de cada 100 futuros simulados la tasa baja en "
                    f"{100 * r['p_baja']:.0f} y sube en {100 * r['p_alza']:.0f}. La regla del proyecto: actuar solo si "
                    "una de las dos llega al **40%** y supera a la otra.")
@@ -171,7 +172,7 @@ if seccion == "🏠 Inicio":
         st.markdown("**📦 ¿Qué te entrega?**\n\nLa **probabilidad** de que la tasa baje o suba, el **pronóstico** de "
                     "la tasa y la inflación mes a mes y una **recomendación** clara.")
 
-    st.subheader("La respuesta de hoy")
+    st.subheader("La respuesta con los últimos datos")
     tarjeta_decision(r, umbral_tasa, horizonte)
     with st.expander("¿Qué significa cada recomendación?"):
         st.markdown(
@@ -182,7 +183,7 @@ if seccion == "🏠 Inicio":
 
     st.subheader("¿Cómo usar esta página?")
     st.markdown(
-        "1. **Mira la recomendación de hoy** (arriba).\n"
+        "1. **Mira la recomendación vigente** (arriba).\n"
         "2. **Ve a 🔮 Pronosticar próximos meses** para ver qué se espera en 2027. Ya trae un ejemplo y puedes cambiar los "
         "datos (por ejemplo, el precio del petróleo) para ver cómo cambia el resultado.\n"
         "3. **Si quieres entender cómo se calcula**, revisa las secciones de Monte Carlo, Markov y VAR.\n"
@@ -317,6 +318,7 @@ elif seccion == "🔮 Pronosticar próximos meses":
                     f"(tasa esperada + 0,28) y la inflación es {i['mediana']:.2f}%, la ganancia **real** (descontando la "
                     f"inflación) sería de **{real:.2f}% al año**: unos **{200_000_000 * real / 100:,.0f} pesos** sobre "
                     "200 millones.".replace(",", "."))
+        st.caption("Es una estimación ilustrativa: la rentabilidad real depende de la tasa que ofrezca el banco, los impuestos y las condiciones del CDT.")
 
     st.subheader("Todos los meses")
     tabla = pd.DataFrame({
@@ -404,7 +406,7 @@ elif seccion == "🎲 Monte Carlo: 5.000 futuros":
               help=f"Descuenta una inflación esperada de {r['inf_mediana']:.2f}%.")
     st.write(f"En un año, {monto:,.0f} pesos ganarían unos **{monto * real / 100:,.0f} pesos por encima de la inflación**."
              .replace(",", "."))
-    st.caption("Por defecto: tasa interbancaria de hoy + 0,28 puntos (supuesto del proyecto). No incluye impuestos ni comisiones.")
+    st.caption("Estimación ilustrativa, no una rentabilidad bancaria garantizada. Por defecto usa la tasa interbancaria del último dato + 0,28 puntos (supuesto del proyecto); no incluye impuestos, comisiones ni las condiciones de cada banco.")
 
 # ---------------------------------------------------------------------------
 # MARKOV
@@ -416,7 +418,7 @@ elif seccion == "🔁 Markov: etapa del ciclo":
         "clasifica según cuánto cambió la tasa en los últimos 3 meses: **bajando** (bajó 0,25 puntos o más), "
         "**estable** (se movió menos de 0,25) o **subiendo** (subió 0,25 o más). La cadena de Markov cuenta, con la "
         "historia, qué tan seguido se pasa de una etapa a otra.")
-    st.subheader(f"Hoy ({mes(r['fecha_hoy'])}) el ciclo está: **{m.FASES[r['fase_hoy']].upper()}**")
+    st.subheader(f"Con el último dato disponible ({mes(r['fecha_hoy'])}) el ciclo está: **{m.FASES[r['fase_hoy']].upper()}**")
     prob = pd.DataFrame({f"En {h} meses": 100 * r["prob_markov"][h] for h in (3, 6, 12)}, index=m.FASES).round(0)
     prob.index = ["seguir/pasar a bajando", "seguir/pasar a estable", "seguir/pasar a subiendo"]
     st.markdown("**¿Dónde podría estar el ciclo más adelante? (% de probabilidad)**")
@@ -517,11 +519,11 @@ elif seccion == "✅ ¿Qué tan confiable es?":
                            "millones). Supone CDT = tasa interbancaria + 0,28, sin impuestos ni comisiones.")
     st.subheader("Conclusiones")
     st.markdown(
-        "- ✅ **Pronostica la inflación** mejor que suponer que no cambia, y eso define cuánto gana de verdad un CDT.\n"
+        "- ✅ **Pronostica la inflación** mejor que suponer que no cambia. La inflación es una de las piezas para estimar cuánto gana de verdad un CDT; la ganancia real también depende de la tasa que ofrezca el banco, los impuestos y las condiciones del producto.\n"
         "- ✅ **Da probabilidades y rangos**, no solo un número: ayuda a decidir con la incertidumbre a la vista.\n"
         "- ✅ **Sabe cuándo no está seguro:** si la señal es débil, recomienda escalonar en vez de apostar.\n"
         "- 🟰 **Para saber si la tasa sube o baja**, empata con una regla simple de seguir la tendencia.\n"
-        f"- 📌 **Hoy ({mes(r['fecha_hoy'])}):** {r['reco_final'].lower()}. Es más probable una baja ({100 * r['p_baja']:.0f}%) "
+        f"- 📌 **Con el último dato disponible ({mes(r['fecha_hoy'])}):** {r['reco_final'].lower()}. Es más probable una baja ({100 * r['p_baja']:.0f}%) "
         f"que una subida ({100 * r['p_alza']:.0f}%), pero sin llegar al 40%.")
     with st.expander("Limitaciones"):
         st.markdown(
