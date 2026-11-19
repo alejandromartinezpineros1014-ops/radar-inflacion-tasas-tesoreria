@@ -1,0 +1,9 @@
+prueba,resultado,nota
+Estabilidad (raíz máx. < 1),0.973,Cumple: el modelo es estable
+Autocorrelación Portmanteau(12),p = 0.0000,
+Autocorrelación Portmanteau(24),p = 0.0000,
+Normalidad Jarque-Bera,p = 0.0000,
+ARCH(12) inflacion_anual,p = 0.3715,
+ARCH(12) tasa_interes,p = 0.0000,
+ARCH(12) var_anual_trm,p = 0.0007,
+ARCH(12) var_anual_brent,p = 0.0016,
